@@ -11,7 +11,6 @@ import (
 
 	"github.com/SarthakShrivastav-a/hoppr/internal/connect"
 	"github.com/SarthakShrivastav-a/hoppr/internal/host"
-	"github.com/SarthakShrivastav-a/hoppr/internal/paths"
 	"github.com/SarthakShrivastav-a/hoppr/internal/sshconfig"
 )
 
@@ -239,9 +238,10 @@ func (m Model) submitForm() (tea.Model, tea.Cmd) {
 
 	idents := splitList(f.value(fIdentity))
 	if len(idents) > 0 {
-		// Store in tilde form so the config stays portable across machines.
+		// Resolve a bare or relative key name to where the key actually is, and
+		// store it in portable tilde form.
 		for i, p := range idents {
-			idents[i] = paths.Tildify(paths.Expand(p))
+			idents[i] = connect.ResolveKeyPath(p)
 		}
 		block.SetAll("IdentityFile", idents)
 		// A host that names a key should use only that key; see doctor.
