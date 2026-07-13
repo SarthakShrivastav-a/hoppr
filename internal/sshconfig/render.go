@@ -46,6 +46,8 @@ func (f *File) Save() error {
 		return fmt.Errorf("sshconfig: cannot save a file with no path")
 	}
 
+	content := f.String()
+
 	mode := os.FileMode(0o600)
 	if st, err := os.Stat(f.Path); err == nil {
 		mode = st.Mode().Perm()
@@ -63,7 +65,7 @@ func (f *File) Save() error {
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName) // no-op once the rename succeeds
 
-	if _, err := io.WriteString(tmp, f.String()); err != nil {
+	if _, err := io.WriteString(tmp, content); err != nil {
 		tmp.Close()
 		return fmt.Errorf("sshconfig: write temp file: %w", err)
 	}
@@ -89,5 +91,8 @@ func (f *File) Save() error {
 			return fmt.Errorf("sshconfig: rename into place: %w", err)
 		}
 	}
+
+	// What is on disk is now what we rendered, so the file is clean again.
+	f.orig = content
 	return nil
 }
