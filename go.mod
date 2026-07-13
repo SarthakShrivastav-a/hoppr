@@ -2,6 +2,9 @@ module github.com/SarthakShrivastav-a/hoppr
 
 go 1.25.0
 
+// Withdrawn. Use v0.2.0 or later.
+retract v0.1.0
+
 require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
