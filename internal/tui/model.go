@@ -250,6 +250,17 @@ func flashError(err error) tea.Cmd {
 // refilter recomputes the visible rows and keeps the cursor in range.
 func (m *Model) refilter() {
 	m.matches = host.Filter(m.hosts, m.search.Value(), m.tagFilter)
+
+	// With no query, rank by what you actually use. Alphabetical is close to
+	// random here: the two boxes you touch daily sit wherever the alphabet put
+	// them, under six you provisioned once and forgot.
+	//
+	// Once a query is being typed, the fuzzy score is what the user is steering
+	// by, and reordering underneath them would make the list fight back.
+	if m.search.Value() == "" {
+		host.SortByRecency(m.matches, m.hist.LastUsed)
+	}
+
 	if m.cursor >= len(m.matches) {
 		m.cursor = max(0, len(m.matches)-1)
 	}
