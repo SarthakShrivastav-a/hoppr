@@ -71,6 +71,25 @@ func (b *Block) SetAll(key string, values []string) {
 	}
 }
 
+// SetArgs assigns key a multi-argument value, quoting each argument separately.
+//
+// Set treats its value as one argument and quotes it if it contains a space,
+// which is right for a path but wrong for a keyword that genuinely takes two
+// arguments: LocalForward wants
+//
+//	LocalForward 8080 localhost:80
+//
+// and quoting that into a single "8080 localhost:80" argument produces a config
+// OpenSSH rejects.
+func (b *Block) SetArgs(key string, args ...string) {
+	v := joinArgs(args)
+	if d := b.find(key); d != nil {
+		d.Value = v
+		return
+	}
+	b.appendDirective(key, v)
+}
+
 // Unset removes every directive matching key. It reports how many it removed.
 func (b *Block) Unset(key string) int {
 	kept := b.Nodes[:0]
