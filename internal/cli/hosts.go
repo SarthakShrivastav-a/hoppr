@@ -229,10 +229,11 @@ Flags such as -i, -p, -J, -L, -R, -D, and -o are all carried across.`,
 
 func newRemoveCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "rm <alias>",
-		Aliases: []string{"remove"},
-		Short:   "Remove a host",
-		Args:    cobra.ExactArgs(1),
+		Use:               "rm <alias>",
+		Aliases:           []string{"remove"},
+		Short:             "Remove a host",
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: completeHost,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := guard(); err != nil {
 				return err
@@ -268,9 +269,10 @@ func newConnectCmd() *cobra.Command {
 	var dryRun bool
 
 	cmd := &cobra.Command{
-		Use:   "connect <alias>",
-		Short: "Connect to a host",
-		Args:  cobra.ExactArgs(1),
+		Use:               "connect <alias>",
+		Short:             "Connect to a host",
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: completeHost,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path, err := configPath()
 			if err != nil {

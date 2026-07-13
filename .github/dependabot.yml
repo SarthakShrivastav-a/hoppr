@@ -1,0 +1,18 @@
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Bubble Tea, Bubbles, and Lipgloss move together; separate PRs for each
+      # just produce three CI runs that only pass once all three are merged.
+      charm:
+        patterns:
+          - "github.com/charmbracelet/*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
