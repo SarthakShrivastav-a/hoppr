@@ -1,0 +1,16 @@
+# Build output. Anchored so cmd/hoppr (a package dir) is never ignored.
+/bin/
+/dist/
+/hoppr
+/hoppr.exe
+
+# Test + coverage artifacts
+*.out
+*.test
+coverage.txt
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
