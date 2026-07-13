@@ -107,7 +107,16 @@ type File struct {
 	Path            string
 	Nodes           []Node
 	TrailingNewline bool
+
+	// orig is the exact source this file was parsed from. Because rendering an
+	// unedited file reproduces its input byte for byte, comparing against orig
+	// is a reliable dirty check — and a cheaper one than threading a mutation
+	// flag through every setter on every node.
+	orig string
 }
+
+// Dirty reports whether the file's content has changed since it was parsed.
+func (f *File) Dirty() bool { return f.String() != f.orig }
 
 // Blocks returns every Host and Match stanza in file order.
 func (f *File) Blocks() []*Block {

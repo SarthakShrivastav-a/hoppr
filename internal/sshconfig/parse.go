@@ -23,9 +23,9 @@ func Parse(r io.Reader, path string) (*File, error) {
 
 // ParseBytes parses config source that is already in memory.
 func ParseBytes(raw []byte, path string) *File {
-	f := &File{Path: path}
-
 	text := string(raw)
+	f := &File{Path: path, orig: text}
+
 	if text == "" {
 		f.TrailingNewline = true
 		return f
