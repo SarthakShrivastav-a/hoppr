@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SarthakShrivastav-a/hoppr/internal/keys"
 	"github.com/SarthakShrivastav-a/hoppr/internal/paths"
 	"github.com/SarthakShrivastav-a/hoppr/internal/sshconfig"
 )
@@ -34,13 +35,11 @@ func (s *Spec) Apply(f *sshconfig.File) (*sshconfig.Block, error) {
 	}
 
 	if len(s.IdentityFiles) > 0 {
-		// Written in tilde form so the config survives being synced to another
-		// machine or into WSL.
-		tilde := make([]string, len(s.IdentityFiles))
+		resolved := make([]string, len(s.IdentityFiles))
 		for i, p := range s.IdentityFiles {
-			tilde[i] = paths.Tildify(paths.Expand(p))
+			resolved[i] = ResolveKeyPath(p)
 		}
-		b.SetAll("IdentityFile", tilde)
+		b.SetAll("IdentityFile", resolved)
 
 		// An explicit key means we should use only that key. Otherwise ssh
 		// offers every key in the agent first and can burn through the server's
@@ -81,6 +80,25 @@ func (s *Spec) Apply(f *sshconfig.File) (*sshconfig.Block, error) {
 	}
 
 	return b, nil
+}
+
+// ResolveKeyPath turns a key path from a pasted command into one that works
+// from any directory, and writes it in portable tilde form.
+//
+// A pasted `-i dev.pem` is relative to the directory the user was standing in —
+// which is the entire reason the command had a `cd` in front of it. Storing that
+// verbatim produces a config entry that works from exactly one directory and
+// fails everywhere else, with an error that says "Permission denied (publickey)"
+// and never mentions the working directory.
+//
+// If the key can be found, store where it actually is. If it cannot, keep what
+// the user gave us rather than inventing a path: a wrong-but-honest entry they
+// can see and correct beats a confidently wrong one.
+func ResolveKeyPath(p string) string {
+	if found, ok := keys.Locate(p); ok {
+		return paths.Tildify(found)
+	}
+	return paths.Tildify(paths.Expand(p))
 }
 
 // splitForward converts ssh's command-line forward syntax into the two
