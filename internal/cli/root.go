@@ -68,6 +68,7 @@ Run with no arguments to open the interactive list.`,
 		newImportCmd(),
 		newRemoveCmd(),
 		newConnectCmd(),
+		newForwardCmd(),
 		newKeysCmd(),
 		newDoctorCmd(),
 	)
