@@ -1,0 +1,44 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+
+      # Brew and scoop publication is gated behind a repo variable so that a
+      # release still succeeds before the tap and bucket repos exist. Set
+      # HOPPR_PUBLISH_PACKAGE_MANAGERS=true (Settings -> Variables -> Actions)
+      # once they are there and HOPPR_RELEASE_TOKEN is set as a secret.
+      - name: Compute goreleaser skip flags
+        id: flags
+        run: |
+          if [ "${{ vars.HOPPR_PUBLISH_PACKAGE_MANAGERS }}" = "true" ]; then
+            echo "skips=" >> "$GITHUB_OUTPUT"
+          else
+            echo "skips=--skip=homebrew,scoop" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean ${{ steps.flags.outputs.skips }}
+        env:
+          # The default GITHUB_TOKEN cannot push to the tap and bucket repos,
+          # but it is fine for the binary release itself.
+          GITHUB_TOKEN: ${{ secrets.HOPPR_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
