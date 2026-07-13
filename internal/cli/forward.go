@@ -37,7 +37,8 @@ dead port that still looks open.
 
 Pass --save to store the forward on the host in ssh_config, so a plain
 "ssh prod" brings it up too.`,
-		Args: cobra.ExactArgs(1),
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: completeHost,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path, err := configPath()
 			if err != nil {
