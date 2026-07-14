@@ -3,6 +3,8 @@
 package connect
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -61,18 +63,42 @@ func Args(h *host.Host, opt Options) []string {
 	return args
 }
 
+// ErrUnsafeAlias is returned for an alias ssh would read as an option.
+var ErrUnsafeAlias = errors.New("alias starts with '-', which ssh would read as a flag rather than a host")
+
+// Check rejects a host that must not be connected to.
+//
+// host.Load already filters these out of the list, so this should never fire in
+// practice. It is here because the cost of being wrong is arbitrary command
+// execution — `ssh -oProxyCommand=...` runs whatever it is given — and a single
+// missed call site would be enough. Two independent checks, one at listing and
+// one at execution, is cheap insurance against that.
+func Check(h *host.Host) error {
+	if host.IsUnsafeAlias(h.Alias) {
+		return fmt.Errorf("refusing to connect to %q: %w", h.Alias, ErrUnsafeAlias)
+	}
+	return nil
+}
+
 // Command builds the exec.Cmd that connects to h, wired to the real terminal.
 //
 // stdin, stdout, and stderr are inherited rather than captured. ssh's own error
 // output is the single most useful thing on the screen when a connection fails,
 // and swallowing it — or flashing it for a tenth of a second before redrawing a
 // TUI over it — is a complaint filed against nearly every manager in this space.
-func Command(h *host.Host, opt Options) *exec.Cmd {
+//
+// Returns an error rather than a command for an alias ssh would misread as a
+// flag; see Check.
+func Command(h *host.Host, opt Options) (*exec.Cmd, error) {
+	if err := Check(h); err != nil {
+		return nil, err
+	}
+
 	cmd := exec.Command(sshBinary(), Args(h, opt)...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd
+	return cmd, nil
 }
 
 // Preview renders the command hoppr would run, for display in the UI. It is the
