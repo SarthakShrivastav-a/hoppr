@@ -254,9 +254,15 @@ func (m Model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // left running behind the session, and ssh's error message flashing past too
 // fast to read.
 func (m Model) connect(h *host.Host) (tea.Model, tea.Cmd) {
-	m.hist.Record(h.Alias)
+	cmd, err := connect.Command(h, connect.Options{ConfigPath: m.configPath})
+	if err != nil {
+		// An alias ssh would read as a flag. host.Load should already have kept
+		// it out of the list, so reaching here means something is wrong — say so
+		// rather than running it.
+		return m, flashError(err)
+	}
 
-	cmd := connect.Command(h, connect.Options{ConfigPath: m.configPath})
+	m.hist.Record(h.Alias)
 
 	return m, tea.Sequence(
 		// Set the terminal title to the host, so a wall of tabs is navigable.

@@ -125,6 +125,9 @@ func newAddCmd() *cobra.Command {
 			if host.IsPattern(alias) {
 				return fmt.Errorf("%q contains a glob or negation, which makes it a pattern rather than a host", alias)
 			}
+			if host.IsUnsafeAlias(alias) {
+				return fmt.Errorf("%q starts with '-', which ssh would read as a flag rather than a host", alias)
+			}
 			if hostname == "" {
 				return fmt.Errorf("--host is required")
 			}
@@ -289,6 +292,12 @@ func newConnectCmd() *cobra.Command {
 			}
 
 			opts := connect.Options{ConfigPath: path}
+
+			// Check before previewing too: printing a command we would refuse to
+			// run, as though it were fine, is its own small lie.
+			if err := connect.Check(h); err != nil {
+				return err
+			}
 			if dryRun {
 				fmt.Fprintln(out, connect.Preview(h, opts))
 				return nil
@@ -297,7 +306,11 @@ func newConnectCmd() *cobra.Command {
 			// Replace this process's stdio with ssh's and wait. The exit code
 			// is ssh's, so `hoppr connect x && something` behaves the way a
 			// script expects.
-			return connect.Command(h, opts).Run()
+			sshCmd, err := connect.Command(h, opts)
+			if err != nil {
+				return err
+			}
+			return sshCmd.Run()
 		},
 	}
 

@@ -190,6 +190,10 @@ func (m Model) submitForm() (tea.Model, tea.Cmd) {
 		f.err = "an alias cannot contain * ? or a leading ! — those make it a pattern, not a host"
 		return m, nil
 	}
+	if host.IsUnsafeAlias(alias) {
+		f.err = "an alias cannot start with '-' — ssh would read it as a flag, not a host"
+		return m, nil
+	}
 	if hostname == "" {
 		f.err = "a hostname or IP is required"
 		return m, nil

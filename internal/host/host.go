@@ -91,6 +91,27 @@ func IsPattern(s string) bool {
 	return strings.ContainsAny(s, "*?") || strings.HasPrefix(s, "!")
 }
 
+// IsUnsafeAlias reports whether s would be read by ssh as an option rather than
+// as a destination.
+//
+// Connecting runs `ssh <alias>`, so an alias of "-oProxyCommand=calc" is not a
+// host at all — it is a flag, and ssh will execute it. Typing that yourself is
+// your own business, but hoppr renders the config's hosts as a list you pick
+// from, which turns a hostile stanza in someone else's Include'd conf.d file
+// into a one-keypress command execution that looks like a normal server.
+//
+// Plain ssh has the same behaviour; the difference is that hoppr presents the
+// thing as safe to select. So refuse it: never list it, never connect to it,
+// never let one be created.
+func IsUnsafeAlias(s string) bool {
+	return strings.HasPrefix(s, "-")
+}
+
+// Connectable reports whether s is an alias hoppr will actually offer.
+func Connectable(s string) bool {
+	return s != "" && !IsPattern(s) && !IsUnsafeAlias(s)
+}
+
 // FromBlock builds a Host from a stanza, or reports false if the stanza
 // declares no connectable alias at all.
 func FromBlock(f *sshconfig.File, b *sshconfig.Block) (*Host, bool) {
@@ -98,7 +119,10 @@ func FromBlock(f *sshconfig.File, b *sshconfig.Block) (*Host, bool) {
 
 	var literals []string
 	for _, p := range patterns {
-		if !IsPattern(p) {
+		// Connectable drops both glob/negation patterns (which configure other
+		// hosts rather than being one) and option-shaped aliases (which ssh
+		// would execute as flags).
+		if Connectable(p) {
 			literals = append(literals, p)
 		}
 	}
