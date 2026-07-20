@@ -44,7 +44,7 @@ jobs:
           git fetch --tags --force
           git checkout "${{ steps.tag.outputs.new_tag }}"
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         if: steps.tag.outputs.new_tag != ''
         with:
           go-version: "1.25.x"
