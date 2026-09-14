@@ -1,6 +1,6 @@
 module github.com/SarthakShrivastav-a/hoppr
 
-go 1.25.0
+go 1.26.0
 
 // Withdrawn. Use v0.2.0 or later.
 retract v0.1.0
@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.54.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
